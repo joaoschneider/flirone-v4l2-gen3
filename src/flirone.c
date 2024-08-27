@@ -40,21 +40,21 @@
 /* defines */
 
 // color visible image
-#define FRAME_WIDTH1    640
-#define FRAME_HEIGHT1   480
+#define FRAME_WIDTH1 640
+#define FRAME_HEIGHT1 480
 
 // colorized thermal image
-#define FRAME_WIDTH2    frame_width2
-#define FRAME_HEIGHT2   frame_height2
+#define FRAME_WIDTH2 frame_width2
+#define FRAME_HEIGHT2 frame_height2
 // original width/height
-#define FRAME_OWIDTH2   frame_owidth2
-#define FRAME_OHEIGHT2  frame_oheight2
+#define FRAME_OWIDTH2 frame_owidth2
+#define FRAME_OHEIGHT2 frame_oheight2
 
 // max chars in line
-#define MAX_CHARS2      (FRAME_WIDTH2 / 6 + (flirone_pro ? 0 : 1))
+#define MAX_CHARS2 (FRAME_WIDTH2 / 6 + (flirone_pro ? 0 : 1))
 
-#define FRAME_FORMAT1   V4L2_PIX_FMT_MJPEG
-#define FRAME_FORMAT2   V4L2_PIX_FMT_RGB24
+#define FRAME_FORMAT1 V4L2_PIX_FMT_MJPEG
+#define FRAME_FORMAT2 V4L2_PIX_FMT_RGB24
 
 #define FONT_COLOR_DFLT 0xff
 
@@ -63,15 +63,15 @@
 #define PRODUCT_ID 0x1996
 
 /* These are just to make USB requests easier to read */
-#define REQ_TYPE    1
-#define REQ         0xb
-#define V_STOP      0
-#define V_START     1
-#define INDEX(i)    (i)
-#define LEN(l)      (l)
+#define REQ_TYPE 1
+#define REQ 0xb
+#define V_STOP 0
+#define V_START 1
+#define INDEX(i) (i)
+#define LEN(l) (l)
 
 // buffer for EP 0x85 chunks
-#define BUF85SIZE   1048576     // size got from android app
+#define BUF85SIZE 1048576 // size got from android app
 
 /* global data */
 
@@ -86,7 +86,7 @@ static char flirone_pro = 0;
 static char pal_inverse = 0;
 static char pal_colors = 0;
 
-static int FFC = 0;    // detect FFC
+static int FFC = 0; // detect FFC
 
 static int fdwr1 = 0;
 static int fdwr2 = 0;
@@ -96,29 +96,32 @@ static unsigned char buf85[BUF85SIZE];
 
 /* functions */
 
-void print_format(struct v4l2_format*vid_format)
+void print_format(struct v4l2_format *vid_format)
 {
-    printf("     vid_format->type                =%d\n",     vid_format->type );
-    printf("     vid_format->fmt.pix.width       =%d\n",     vid_format->fmt.pix.width );
-    printf("     vid_format->fmt.pix.height      =%d\n",     vid_format->fmt.pix.height );
-    printf("     vid_format->fmt.pix.pixelformat =%d\n",     vid_format->fmt.pix.pixelformat);
-    printf("     vid_format->fmt.pix.sizeimage   =%u\n",     vid_format->fmt.pix.sizeimage );
-    printf("     vid_format->fmt.pix.field       =%d\n",     vid_format->fmt.pix.field );
-    printf("     vid_format->fmt.pix.bytesperline=%d\n",     vid_format->fmt.pix.bytesperline );
-    printf("     vid_format->fmt.pix.colorspace  =%d\n",     vid_format->fmt.pix.colorspace );
+    printf("     vid_format->type                =%d\n", vid_format->type);
+    printf("     vid_format->fmt.pix.width       =%d\n", vid_format->fmt.pix.width);
+    printf("     vid_format->fmt.pix.height      =%d\n", vid_format->fmt.pix.height);
+    printf("     vid_format->fmt.pix.pixelformat =%d\n", vid_format->fmt.pix.pixelformat);
+    printf("     vid_format->fmt.pix.sizeimage   =%u\n", vid_format->fmt.pix.sizeimage);
+    printf("     vid_format->fmt.pix.field       =%d\n", vid_format->fmt.pix.field);
+    printf("     vid_format->fmt.pix.bytesperline=%d\n", vid_format->fmt.pix.bytesperline);
+    printf("     vid_format->fmt.pix.colorspace  =%d\n", vid_format->fmt.pix.colorspace);
 }
 
 void font_write(unsigned char *fb, int x, int y, const char *string,
-    unsigned char color)
+                unsigned char color)
 {
     int rx, ry, pos;
 
-    while (*string) {
-        for (ry = 0; ry < 7; ry++) {
-            for (rx = 0; rx < 5; rx++) {
+    while (*string)
+    {
+        for (ry = 0; ry < 7; ry++)
+        {
+            for (rx = 0; rx < 5; rx++)
+            {
                 int v = (font5x7_basic[(*string & 0x7F) - CHAR_OFFSET][rx] >> (ry)) & 1;
                 pos = (y + ry) * FRAME_WIDTH2 + (x + rx);
-                fb[pos] = v ? color : fb[pos];  // transparent
+                fb[pos] = v ? color : fb[pos]; // transparent
             }
         }
         string++;
@@ -131,11 +134,11 @@ static double raw2temperature(unsigned short RAW)
     // mystery correction factor
     RAW *= 4;
     // calc amount of radiance of reflected objects ( Emissivity < 1 )
-    double RAWrefl=PlanckR1/(PlanckR2*(exp(PlanckB/(TempReflected+273.15))-PlanckF))-PlanckO;
+    double RAWrefl = PlanckR1 / (PlanckR2 * (exp(PlanckB / (TempReflected + 273.15)) - PlanckF)) - PlanckO;
     // get displayed object temp max/min
-    double RAWobj=(RAW-(1-Emissivity)*RAWrefl)/Emissivity;
+    double RAWobj = (RAW - (1 - Emissivity) * RAWrefl) / Emissivity;
     // calc object temperature
-    return PlanckB/log(PlanckR1/(PlanckR2*(RAWobj+PlanckO))+PlanckF)-273.15;
+    return PlanckB / log(PlanckR1 / (PlanckR2 * (RAWobj + PlanckO)) + PlanckF) - 273.15;
 }
 
 static void startv4l2()
@@ -146,7 +149,7 @@ static void startv4l2()
     size_t linewidth1 = 0, framesize1 = 0;
     size_t linewidth2 = 0, framesize2 = 0;
 
-    //open video_device1
+    // open video_device1
     printf("using output device: %s\n", video_device1);
 
     fdwr1 = open(video_device1, O_RDWR);
@@ -177,7 +180,7 @@ static void startv4l2()
 
     print_format(&vid_format1);
 
-    //open video_device2
+    // open video_device2
     printf("using output device: %s\n", video_device2);
 
     fdwr2 = open(video_device2, O_RDWR);
@@ -210,13 +213,13 @@ static void startv4l2()
 }
 
 static void vframe(char ep[], char EP_error[], int r, int actual_length,
-    unsigned char buf[], unsigned char *colormap)
+                   unsigned char buf[], unsigned char *colormap)
 {
     time_t now1;
-    char magicbyte[4] = { 0xEF, 0xBE, 0x00, 0x00 };
+    char magicbyte[4] = {0xEF, 0xBE, 0x00, 0x00};
     uint32_t FrameSize, ThermalSize, JpgSize;
     int v, x, y, pos, disp;
-    unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2];   // original Flir 16 Bit RAW
+    unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2]; // original Flir 16 Bit RAW 80 x 60
     unsigned char *fb_proc, *fb_proc2;
     size_t framesize2 = FRAME_WIDTH2 * FRAME_HEIGHT2 * 3; // 8x8x8 Bit
     int min = 0x10000, max = 0;
@@ -226,13 +229,16 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     char st1[100];
     char st2[100];
     struct tm *loctime;
+    FILE *thermalData = fopen("dadosTermicos.txt", "w");
 
     now1 = time(NULL);
-    if (r < 0) {
-        if (strcmp(EP_error, libusb_error_name(r)) != 0) {
+    if (r < 0)
+    {
+        if (strcmp(EP_error, libusb_error_name(r)) != 0)
+        {
             strcpy(EP_error, libusb_error_name(r));
             fprintf(stderr, "\n: %s >>>>>>>>>>>>>>>>>bulk transfer (in) %s:%i %s\n",
-                ctime(&now1), ep, r, libusb_error_name(r));
+                    ctime(&now1), ep, r, libusb_error_name(r));
             sleep(1);
         }
         return;
@@ -240,26 +246,28 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
     // reset buffer if the new chunk begins with magic bytes or the buffer size limit is exceeded
     if (strncmp((char *)buf, magicbyte, 4) == 0 ||
-            buf85pointer + actual_length >= BUF85SIZE)
+        buf85pointer + actual_length >= BUF85SIZE)
         buf85pointer = 0;
 
-    memmove(buf85 + buf85pointer, buf, actual_length);
+    memmove(buf85 + buf85pointer, buf, actual_length); // copia dados do pacote de dados recebido (parametro buf) para o buf85 (que armazena todos os pacotes recebidos que estão relacionados ao mesmo frame)
     buf85pointer += actual_length;
 
-    if (strncmp((char *)buf85, magicbyte, 4) != 0) {
-        //reset buff pointer
+    if (strncmp((char *)buf85, magicbyte, 4) != 0)
+    {
+        // reset buff pointer
         buf85pointer = 0;
         printf("Reset buffer because of bad Magic Byte!\n");
         return;
     }
 
     // a quick and dirty job for gcc
-    FrameSize   = buf85[ 8] + (buf85[ 9] << 8) + (buf85[10] << 16) + (buf85[11] << 24);
+    FrameSize = buf85[8] + (buf85[9] << 8) + (buf85[10] << 16) + (buf85[11] << 24); // lê tamanho total do frame a partir do header
     ThermalSize = buf85[12] + (buf85[13] << 8) + (buf85[14] << 16) + (buf85[15] << 24);
-    JpgSize     = buf85[16] + (buf85[17] << 8) + (buf85[18] << 16) + (buf85[19] << 24);
+    JpgSize = buf85[16] + (buf85[17] << 8) + (buf85[18] << 16) + (buf85[19] << 24);
 
+    // verifica se a qtd de bytes recebidos (buf85pointer aponta para o final) é a qtd de bytes esperados (FrameSize + 28)
     if (FrameSize + 28 > buf85pointer)
-        // wait for next chunk
+        // se não for, devemos aguardar o próximo pacote de dados e agregá-lo a este buf85pointer.
         return;
 
     /*
@@ -277,7 +285,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     fb_proc2 = malloc(FRAME_WIDTH2 * FRAME_HEIGHT2 * 3); // 8x8x8  Bit RGB buffer
     assert(fb_proc2);
 
-    if (pal_colors) {
+    if (pal_colors)
+    {
         for (y = 0; y < FRAME_HEIGHT2; ++y)
             for (x = 0; x < FRAME_WIDTH2; ++x)
                 for (disp = 0; disp < 3; disp++)
@@ -292,33 +301,73 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     hw = FRAME_OWIDTH2 / 2;
     hh = FRAME_OHEIGHT2 / 2;
 
-    for (y = 0; y < FRAME_OHEIGHT2; y++) {
-        for (x = 0; x < FRAME_OWIDTH2; x++) {
-            if (flirone_pro) {
+    for (y = 0; y < FRAME_OHEIGHT2; y++)
+    {
+        for (x = 0; x < FRAME_OWIDTH2; x++)
+        {
+            if (flirone_pro)
+            {
                 pos = 2 * (y * (FRAME_OWIDTH2 + 4) + x) + 32;
                 if (x > hw)
                     pos += 4;
-            } else {
+            }
+            else
+            {
                 /*
                  * 32 - seems to be the header size
                  * +2 - for some reason 2 16-bit values must be skipped at the end
                  *      of each line
                  */
+
+                //(y * FRAME_OWIDTH2 + 2) + x = controla a linha que está sendo lida
+                // x controla a coluna naquela linha
+                //+2 para fugir dos 2 bytes de status da linha
+                //+32 para fugir do cabeçalho (ocupa 32 bytes) do frame
+                //*2 para posicionar o leitor (pos) no byte menos significativo dos 2 bytes a serem lidos.
+                // logo, se X = 0 e Y =0
+                // pos = 2 * (0 * (80 + 2 ) + 0) + 32
+                // pos = 2 * (0) + 32
+                // pos = 32
+                // se X = 10 e y = 0
+                // pos = 2 * (0 * (80 + 2) + 10) + 32
+                // pos = 2 * (10) + 32
+                // pos = 52
                 pos = 2 * (y * (FRAME_OWIDTH2 + 2) + x) + 32;
             }
 
+            // os dados são enviados em formato little endian
+            // para que possamos pegar as informações termicas de 16 bit:
+            // left-shift no byte mais significativo (pos + 1) + OR com o byte menos significativo
             v = buf85[pos] | buf85[pos + 1] << 8;
+
+            // armazena-se o valor no array pix
             pix[y * FRAME_OWIDTH2 + x] = v;
+
+            if (x == FRAME_OWIDTH2 - 1)
+            {
+                fprintf(thermalData, "%d\n", v);
+            }
+            else
+            {
+                fprintf(thermalData, "%d\t", v);
+            }
 
             if (v < min)
                 min = v;
-            if (v > max) {
+            if (v > max)
+            {
                 max = v;
                 maxx = x;
                 maxy = y;
             }
         }
     }
+
+    int teste;
+    scanf("%d", &teste);
+
+    // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
+    // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
 
     assert(maxx != -1);
     assert(maxy != -1);
@@ -327,15 +376,17 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     // scale the data in the array
     delta = max - min;
     if (delta == 0)
-        delta = 1;   // if max = min we have divide by zero
+        delta = 1; // if max = min we have divide by zero
     scale = 0x10000 / delta;
 
-    for (y = 0; y < FRAME_OHEIGHT2; y++) {
-        for (x = 0; x < FRAME_OWIDTH2; x++) {
-          int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
+    for (y = 0; y < FRAME_OHEIGHT2; y++)
+    {
+        for (x = 0; x < FRAME_OWIDTH2; x++)
+        {
+            int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
 
-          // fb_proc is the gray scale frame buffer
-          fb_proc[y * FRAME_OWIDTH2 + x] = v;   // unsigned char!!
+            // fb_proc is the gray scale frame buffer
+            fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
         }
     }
 
@@ -347,18 +398,21 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     med /= 4;
 
     // Print temperatures and time
-    loctime = localtime (&now1);
+    loctime = localtime(&now1);
 
-    sprintf(st1,"'C %.1f/%.1f/",
-        raw2temperature(min), raw2temperature(med));
+    sprintf(st1, "'C %.1f/%.1f/",
+            raw2temperature(min), raw2temperature(med));
     sprintf(st2, "%.1f ", raw2temperature(max));
     strftime(&st2[strlen(st2)], 60, "%H:%M:%S", loctime);
 
-    if (flirone_pro) {
+    if (flirone_pro)
+    {
         strcat(st1, st2);
         st1[MAX_CHARS2 - 1] = 0;
         font_write(fb_proc, 1, FRAME_OHEIGHT2, st1, FONT_COLOR_DFLT);
-    } else {
+    }
+    else
+    {
         // Print in 2 lines for FLIR ONE G3
         st1[MAX_CHARS2 - 1] = 0;
         st2[MAX_CHARS2 - 1] = 0;
@@ -385,8 +439,10 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     font_write(fb_proc, maxx, FRAME_OHEIGHT2 - 8, "|", FONT_COLOR_DFLT);
 
     // build RGB image
-    for (y = 0; y < FRAME_HEIGHT2; y++) {
-        for (x = 0; x < FRAME_WIDTH2; x++) {
+    for (y = 0; y < FRAME_HEIGHT2; y++)
+    {
+        for (x = 0; x < FRAME_WIDTH2; x++)
+        {
             // fb_proc is the gray scale frame buffer
             v = fb_proc[y * FRAME_OWIDTH2 + x];
             if (pal_inverse)
@@ -401,21 +457,29 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
 render:
     // jpg Visual Image
-    if (write(fdwr1, &buf85[28 + ThermalSize], JpgSize) != JpgSize) {
+    if (write(fdwr1, &buf85[28 + ThermalSize], JpgSize) != JpgSize)
+    {
         perror("write visual image failed");
         exit(1);
     }
 
-    if (strncmp((char *)&buf85[28 + ThermalSize + JpgSize + 17], "FFC", 3) == 0) {
+    if (strncmp((char *)&buf85[28 + ThermalSize + JpgSize + 17], "FFC", 3) == 0)
+    {
         printf("drop FFC frame\n");
-        FFC = 1;    // drop all FFC frames
-    } else {
-        if (FFC == 1) {
+        FFC = 1; // drop all FFC frames
+    }
+    else
+    {
+        if (FFC == 1)
+        {
             printf("drop first frame after FFC\n");
-            FFC = 0;  // drop first frame after FFC
-        } else {
+            FFC = 0; // drop first frame after FFC
+        }
+        else
+        {
             // colorized RGB Thermal Image
-            if (write(fdwr2, fb_proc2, framesize2) != (ssize_t)framesize2) {
+            if (write(fdwr2, fb_proc2, framesize2) != (ssize_t)framesize2)
+            {
                 perror("write thermal image failed");
                 exit(1);
             }
@@ -423,8 +487,8 @@ render:
     }
 
     // free memory
-    free(fb_proc);      // thermal RAW
-    free(fb_proc2);     // visible jpg
+    free(fb_proc);  // thermal RAW
+    free(fb_proc2); // visible jpg
 }
 
 static int find_lvr_flirusb(void)
@@ -435,7 +499,7 @@ static int find_lvr_flirusb(void)
 
 static void usb_exit(void)
 {
-    //close the device
+    // close the device
     libusb_reset_device(devh);
     libusb_close(devh);
     libusb_exit(NULL);
@@ -446,39 +510,45 @@ static int usb_init(void)
     int r;
 
     r = libusb_init(NULL);
-    if (r < 0) {
+    if (r < 0)
+    {
         fprintf(stderr, "failed to initialise libusb\n");
         exit(1);
     }
 
     r = find_lvr_flirusb();
-    if (r < 0) {
+    if (r < 0)
+    {
         fprintf(stderr, "Could not find/open device\n");
         goto out;
     }
     printf("Successfully find the Flir One G2/G3/Pro device\n");
 
     r = libusb_set_configuration(devh, 3);
-    if (r < 0) {
-       fprintf(stderr, "libusb_set_configuration error %d\n", r);
-       goto out;
+    if (r < 0)
+    {
+        fprintf(stderr, "libusb_set_configuration error %d\n", r);
+        goto out;
     }
-   printf("Successfully set usb configuration 3\n");
+    printf("Successfully set usb configuration 3\n");
 
     // Claiming of interfaces is a purely logical operation;
     // it does not cause any requests to be sent over the bus.
     r = libusb_claim_interface(devh, 0);
-    if (r < 0) {
+    if (r < 0)
+    {
         fprintf(stderr, "libusb_claim_interface 0 error %d\n", r);
         goto out;
     }
     r = libusb_claim_interface(devh, 1);
-    if (r < 0) {
+    if (r < 0)
+    {
         fprintf(stderr, "libusb_claim_interface 1 error %d\n", r);
         goto out;
     }
     r = libusb_claim_interface(devh, 2);
-    if (r < 0) {
+    if (r < 0)
+    {
         fprintf(stderr, "libusb_claim_interface 2 error %d\n", r);
         goto out;
     }
@@ -497,7 +567,7 @@ static int EPloop(unsigned char *colormap)
     int actual_length;
     time_t now;
     char EP85_error[50] = "";
-    unsigned char data[2] = { 0, 0 }; // only a bad dummy
+    unsigned char data[2] = {0, 0}; // only a bad dummy
     int state, timeout;
 
     if (usb_init() < 0)
@@ -510,33 +580,38 @@ static int EPloop(unsigned char *colormap)
 
     // don't change timeout=100ms !!
     timeout = 100;
-    while (1) {
-        switch(state) {
+    while (1)
+    {
+        switch (state)
+        {
         case 1:
             printf("stop interface 2 FRAME\n");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_STOP, INDEX(2),
-                    data, LEN(0), timeout);
-            if (r < 0) {
+                                        data, LEN(0), timeout);
+            if (r < 0)
+            {
                 fprintf(stderr, "Control Out error %d\n", r);
                 return r;
             }
 
             printf("stop interface 1 FILEIO\n");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_STOP, INDEX(1),
-                    data, LEN(0), timeout);
-            if (r < 0) {
+                                        data, LEN(0), timeout);
+            if (r < 0)
+            {
                 fprintf(stderr, "Control Out error %d\n", r);
                 return r;
             }
 
             printf("\nstart interface 1 FILEIO\n");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_START,
-                    INDEX(1), data, LEN(0), timeout);
-            if (r < 0) {
+                                        INDEX(1), data, LEN(0), timeout);
+            if (r < 0)
+            {
                 fprintf(stderr, "Control Out error %d\n", r);
                 return r;
             }
-            now = time(0);  // Get the system time
+            now = time(0); // Get the system time
             printf("\n:xx %s", ctime(&now));
             state = 2;
             break;
@@ -544,8 +619,9 @@ static int EPloop(unsigned char *colormap)
         case 2:
             printf("\nAsk for video stream, start EP 0x85:\n");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_START,
-                    INDEX(2), data, LEN(2), timeout * 2);
-            if (r < 0) {
+                                        INDEX(2), data, LEN(2), timeout * 2);
+            if (r < 0)
+            {
                 fprintf(stderr, "Control Out error %d\n", r);
                 return r;
             }
@@ -557,7 +633,7 @@ static int EPloop(unsigned char *colormap)
             // endless loop
             // poll Frame Endpoints 0x85
             r = libusb_bulk_transfer(devh, 0x85, buf, sizeof(buf),
-                    &actual_length, timeout);
+                                     &actual_length, timeout);
             if (actual_length > 0)
                 vframe("0x85", EP85_error, r, actual_length, buf, colormap);
             break;
@@ -566,7 +642,8 @@ static int EPloop(unsigned char *colormap)
         // poll Endpoints 0x81, 0x83
         r = libusb_bulk_transfer(devh, 0x81, buf, sizeof(buf), &actual_length, 10);
         r = libusb_bulk_transfer(devh, 0x83, buf, sizeof(buf), &actual_length, 10);
-        if (strcmp(libusb_error_name(r), "LIBUSB_ERROR_NO_DEVICE")==0) {
+        if (strcmp(libusb_error_name(r), "LIBUSB_ERROR_NO_DEVICE") == 0)
+        {
             fprintf(stderr, "EP 0x83 LIBUSB_ERROR_NO_DEVICE -> reset USB\n");
             goto out;
         }
@@ -583,15 +660,15 @@ out:
 static void usage(void)
 {
     fprintf(stderr,
-        "Usage:\n"
-        "\n"
-        "./flirone [option]* palletes/<palette.raw>\n"
-        "\n"
-        "Options:\n"
-        "\t-i\tUse inverse pallete colors\n"
-        "\t-p\tShow pallete colors instead of sensor data\n"
-        "\t--pro\tSelect FLIR ONE PRO camera (default is FLIR ONE G3)\n"
-        "\t-v <n>\tUse /dev/video<n> and /dev/video<n+1> devices (default is n=1)\n");
+            "Usage:\n"
+            "\n"
+            "./flirone [option]* palletes/<palette.raw>\n"
+            "\n"
+            "Options:\n"
+            "\t-i\tUse inverse pallete colors\n"
+            "\t-p\tShow pallete colors instead of sensor data\n"
+            "\t--pro\tSelect FLIR ONE PRO camera (default is FLIR ONE G3)\n"
+            "\t-v <n>\tUse /dev/video<n> and /dev/video<n+1> devices (default is n=1)\n");
     exit(1);
 }
 
@@ -609,29 +686,35 @@ int main(int argc, char **argv)
         usage();
 
     n = 1;
-    for (i = 1; i < argc; i++) {
+    for (i = 1; i < argc; i++)
+    {
         arg = argv[i];
 
-        if (strcmp(arg, "--pro") == 0) {
+        if (strcmp(arg, "--pro") == 0)
+        {
             flirone_pro = 1;
             frame_width2 = 160;
             frame_height2 = 128;
             frame_owidth2 = 160;
             frame_oheight2 = 120;
-
-        } else if (strcmp(arg, "-v") == 0) {
+        }
+        else if (strcmp(arg, "-v") == 0)
+        {
             arg = argv[++i];
             n = strtol(arg, &endptr, 10);
             if (n < 0 || n > 65535 || *endptr != 0)
                 usage();
-
-        } else if (strcmp(arg, "-i") == 0) {
+        }
+        else if (strcmp(arg, "-i") == 0)
+        {
             pal_inverse = 1;
-
-        } else if (strcmp(arg, "-p") == 0) {
+        }
+        else if (strcmp(arg, "-p") == 0)
+        {
             pal_colors = 1;
-
-        } else {
+        }
+        else
+        {
             if (palpath)
                 usage();
             palpath = arg;
@@ -645,7 +728,8 @@ int main(int argc, char **argv)
 
     fp = fopen(palpath, "rb");
     // read 256 rgb values
-    if (fread(colormap, 1, 768, fp) != 768) {
+    if (fread(colormap, 1, 768, fp) != 768)
+    {
         perror("failed to read colormap");
         exit(1);
     }
