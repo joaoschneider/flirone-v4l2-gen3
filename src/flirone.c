@@ -726,8 +726,8 @@ int main(int argc, char **argv)
     if (palpath == NULL)
         usage();
 
-    sprintf(video_device1, "/dev/video%ld", n);
-    sprintf(video_device2, "/dev/video%ld", n + 1);
+    // sprintf(video_device1, "/dev/video%ld", n);
+    // sprintf(video_device2, "/dev/video%ld", n + 1);
 
     fp = fopen(palpath, "rb");
     // read 256 rgb values
