@@ -9,5 +9,3 @@
 
 #define TempReflected 20.0 // Reflected Apparent Temperature [°C]
 #define Emissivity 0.95    // Emissivity of object
-
-17759, 449 0, 0125 1435 1 - 2604
