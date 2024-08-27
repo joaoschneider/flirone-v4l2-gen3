@@ -363,9 +363,9 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                 maxy = y;
             }
         }
+        fflush(thermalData);
     }
 
-    fflush(thermalData);
     fclose(thermalData);
     printf("Arquivo escrito! %d pixels.", nPixels);
 
