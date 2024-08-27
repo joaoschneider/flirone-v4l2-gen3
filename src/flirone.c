@@ -345,11 +345,11 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
             if (x == FRAME_OWIDTH2 - 1)
             {
-                fprintf(thermalData, "%d\n", v);
+                fprintf(thermalData, "%.1f\n", raw2temperature(v));
             }
             else
             {
-                fprintf(thermalData, "%d\t", v);
+                fprintf(thermalData, "%.1f\t", raw2temperature(v));
             }
 
             nPixels++;
@@ -365,8 +365,6 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    fflush(thermalData);
-    fclose(thermalData);
     printf("Arquivo escrito! %d pixels.", nPixels);
 
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
