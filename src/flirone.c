@@ -149,7 +149,7 @@ static void startv4l2()
     size_t linewidth1 = 0, framesize1 = 0;
     size_t linewidth2 = 0, framesize2 = 0;
 
-    // open video_device1
+    // open f
     printf("using output device: %s\n", video_device1);
 
     fdwr1 = open(video_device1, O_RDWR);
@@ -368,7 +368,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
     fclose(thermalData);
     printf("Arquivo escrito! %d pixels.", nPixels);
-
+    int placeholder;
+    scanf("%d", &placeholder);
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
     // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
 
