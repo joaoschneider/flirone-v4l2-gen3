@@ -361,8 +361,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    int teste;
-    scanf("%d", &teste);
+    printf("Arquivo escrito!");
 
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
     // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
