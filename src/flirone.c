@@ -270,8 +270,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         // se não for, devemos aguardar o próximo pacote de dados e agregá-lo a este buf85pointer.
         return;
 
-    printf("actual_len=%d, buf85pointer=%d, FrameSize=%d, ThermalSize=%d, JpgSize=%d\n",
-           actual_length, buf85pointer, FrameSize, ThermalSize, JpgSize);
+    // printf("actual_len=%d, buf85pointer=%d, FrameSize=%d, ThermalSize=%d, JpgSize=%d\n",
+    //        actual_length, buf85pointer, FrameSize, ThermalSize, JpgSize);
 
     // get a full frame, first print the status
     buf85pointer = 0;
@@ -298,6 +298,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
     hw = FRAME_OWIDTH2 / 2;
     hh = FRAME_OHEIGHT2 / 2;
+
+    int nPixels = 0;
 
     for (y = 0; y < FRAME_OHEIGHT2; y++)
     {
@@ -350,6 +352,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                 fprintf(thermalData, "%d\t", v);
             }
 
+            nPixels++;
+
             if (v < min)
                 min = v;
             if (v > max)
@@ -361,7 +365,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    printf("Arquivo escrito!");
+    printf("Arquivo escrito! %d pixels.", nPixels);
 
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
     // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
