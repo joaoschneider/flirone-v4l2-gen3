@@ -372,10 +372,10 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    printf("Maior valor de temperatura zona A: %.2f\t", raw2temperature(maxZonaA));
-    printf("Maior valor de temperatura zona B: %.2f\n", raw2temperature(maxZonaB));
-    printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
-    printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
+    printf("%.2f\t\t", raw2temperature(maxZonaA));
+    printf("%.2f\n", raw2temperature(maxZonaB));
+    // printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
+    // printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
 
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
     // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
