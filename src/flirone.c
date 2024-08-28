@@ -219,10 +219,12 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     char magicbyte[4] = {0xEF, 0xBE, 0x00, 0x00};
     uint32_t FrameSize, ThermalSize, JpgSize;
     int v, x, y, pos, disp;
-    unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2]; // original Flir 16 Bit RAW 80 x 60
+    // unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2]; // original Flir 16 Bit RAW 80 x 60
+    unsigned short zonaA[(FRAME_OWIDTH2 * FRAME_OHEIGHT2) / 2]; // zona A para controle (à esquerda da imagem)
+    unsigned short zonaB[(FRAME_OWIDTH2 * FRAME_OHEIGHT2) / 2]; // zona B para controle (à direita da imagem)
     unsigned char *fb_proc, *fb_proc2;
     size_t framesize2 = FRAME_WIDTH2 * FRAME_HEIGHT2 * 3; // 8x8x8 Bit
-    int min = 0x10000, max = 0;
+    int minZonaA = 0x10000, maxZonaA = 0, minZonaB = 0x10000, maxZonaB = 0;
     int maxx = -1, maxy = -1;
     int delta, scale, med;
     int hw, hh;
@@ -299,8 +301,6 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     hw = FRAME_OWIDTH2 / 2;
     hh = FRAME_OHEIGHT2 / 2;
 
-    int nPixels = 0;
-
     for (y = 0; y < FRAME_OHEIGHT2; y++)
     {
         for (x = 0; x < FRAME_OWIDTH2; x++)
@@ -341,123 +341,128 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
             v = buf85[pos] | buf85[pos + 1] << 8;
 
             // armazena-se o valor no array pix
-            pix[y * FRAME_OWIDTH2 + x] = v;
-
-            if (x == FRAME_OWIDTH2 - 1)
+            // pix[y * FRAME_OWIDTH2 + x] = v;
+            // se o ponto avaliado estiver na metade inicial da imagem capturada, armazena na zona A
+            if (x >= 0 && x < 40)
             {
-                fprintf(thermalData, "%.1f\n", raw2temperature(v));
+
+                if (v < minZonaA)
+                    minZonaA = v;
+                if (v > maxZonaB)
+                {
+                    maxZonaA = v;
+                }
+                zonaA[(y * (FRAME_OWIDTH2 / 2)) + x] = v;
             }
+            // estando na metade final da image, armazena na zona B
             else
             {
-                fprintf(thermalData, "%.1f\t", raw2temperature(v));
-            }
-
-            nPixels++;
-
-            if (v < min)
-                min = v;
-            if (v > max)
-            {
-                max = v;
-                maxx = x;
-                maxy = y;
+                // aqui pode ser confuso
+                // o primeiro fator da soma controla a linha que está sendo lida da imagem para armazenar no array unidimensional
+                // o segundo fator ajusta o valor de X para que ele esteja normalizado
+                //(desconsiderando o deslocamento de meia largura de imagem por ser a parte direita)
+                zonaB[(y * (FRAME_OWIDTH2 / 2)) + (x - FRAME_WIDTH2 / 2)] = v;
+                if (v < minZonaB)
+                    minZonaB = v;
+                if (v > maxZonaB)
+                {
+                    maxZonaB = v;
+                }
             }
         }
-        fflush(thermalData);
     }
 
-    fclose(thermalData);
-    printf("Arquivo escrito! %d pixels.", nPixels);
-    int placeholder;
-    scanf("%d", &placeholder);
+    printf("Maior valor de temperatura zona A: %.2f\t", raw2temperature(maxZonaA));
+    printf("Maior valor de temperatura zona B: %.2f\n", raw2temperature(maxZonaB));
+    printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
+    printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
+
     // neste ponto, o array de inteiros pix[] já possui as informações thermal do frame
     // salvar essas infos num arquivo .txt organizado conforme a distribuição da imagem: 80 colunas e 60 linhas
 
-    assert(maxx != -1);
-    assert(maxy != -1);
     /* printf("min=%d max=%d x=%d y=%d\n", min, max, maxx, maxy); */
 
-    // scale the data in the array
-    delta = max - min;
-    if (delta == 0)
-        delta = 1; // if max = min we have divide by zero
-    scale = 0x10000 / delta;
+    // // scale the data in the array
+    // delta = max - min;
+    // if (delta == 0)
+    //     delta = 1; // if max = min we have divide by zero
+    // scale = 0x10000 / delta;
 
-    for (y = 0; y < FRAME_OHEIGHT2; y++)
-    {
-        for (x = 0; x < FRAME_OWIDTH2; x++)
-        {
-            int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
+    // for (y = 0; y < FRAME_OHEIGHT2; y++)
+    // {
+    //     for (x = 0; x < FRAME_OWIDTH2; x++)
+    //     {
+    //         int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
 
-            // fb_proc is the gray scale frame buffer
-            fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
-        }
-    }
+    //         // fb_proc is the gray scale frame buffer
+    //         fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
+    //     }
+    // }
 
-    // calc medium of 2x2 center pixels
-    med = pix[(hh - 1) * FRAME_OWIDTH2 + hw - 1] +
-          pix[(hh - 1) * FRAME_OWIDTH2 + hw] +
-          pix[hh * FRAME_OWIDTH2 + hw - 1] +
-          pix[hh * FRAME_OWIDTH2 + hw];
-    med /= 4;
+    // // calc medium of 2x2 center pixels
+    // med = pix[(hh - 1) * FRAME_OWIDTH2 + hw - 1] +
+    //       pix[(hh - 1) * FRAME_OWIDTH2 + hw] +
+    //       pix[hh * FRAME_OWIDTH2 + hw - 1] +
+    //       pix[hh * FRAME_OWIDTH2 + hw];
+    // med /= 4;
 
-    // Print temperatures and time
-    loctime = localtime(&now1);
+    // // Print temperatures and time
+    // loctime = localtime(&now1);
 
-    sprintf(st1, "'C %.1f/%.1f/",
-            raw2temperature(min), raw2temperature(med));
-    sprintf(st2, "%.1f ", raw2temperature(max));
-    strftime(&st2[strlen(st2)], 60, "%H:%M:%S", loctime);
+    // sprintf(st1, "'C %.1f/%.1f/",
+    //         raw2temperature(min), raw2temperature(med));
+    // sprintf(st2, "%.1f ", raw2temperature(max));
+    // strftime(&st2[strlen(st2)], 60, "%H:%M:%S", loctime);
 
-    if (flirone_pro)
-    {
-        strcat(st1, st2);
-        st1[MAX_CHARS2 - 1] = 0;
-        font_write(fb_proc, 1, FRAME_OHEIGHT2, st1, FONT_COLOR_DFLT);
-    }
-    else
-    {
-        // Print in 2 lines for FLIR ONE G3
-        st1[MAX_CHARS2 - 1] = 0;
-        st2[MAX_CHARS2 - 1] = 0;
-        font_write(fb_proc, 1, FRAME_OHEIGHT2 + 2, st1, FONT_COLOR_DFLT);
-        font_write(fb_proc, 1, FRAME_OHEIGHT2 + 12, st2, FONT_COLOR_DFLT);
-    }
+    // if (flirone_pro)
+    // {
+    //     strcat(st1, st2);
+    //     st1[MAX_CHARS2 - 1] = 0;
+    //     font_write(fb_proc, 1, FRAME_OHEIGHT2, st1, FONT_COLOR_DFLT);
+    // }
+    // else
+    // {
+    //     // Print in 2 lines for FLIR ONE G3
+    //     st1[MAX_CHARS2 - 1] = 0;
+    //     st2[MAX_CHARS2 - 1] = 0;
+    //     font_write(fb_proc, 1, FRAME_OHEIGHT2 + 2, st1, FONT_COLOR_DFLT);
+    //     font_write(fb_proc, 1, FRAME_OHEIGHT2 + 12, st2, FONT_COLOR_DFLT);
+    // }
 
-    // show crosshairs, remove if required
-    font_write(fb_proc, hw - 2, hh - 3, "+", FONT_COLOR_DFLT);
+    // // show crosshairs, remove if required
+    // font_write(fb_proc, hw - 2, hh - 3, "+", FONT_COLOR_DFLT);
 
-    maxx -= 4;
-    maxy -= 4;
+    // maxx -= 4;
+    // maxy -= 4;
 
-    if (maxx < 0)
-        maxx = 0;
-    if (maxy < 0)
-        maxy = 0;
-    if (maxx > FRAME_OWIDTH2 - 10)
-        maxx = FRAME_OWIDTH2 - 10;
-    if (maxy > FRAME_OHEIGHT2 - 10)
-        maxy = FRAME_OHEIGHT2 - 10;
+    // if (maxx < 0)
+    //     maxx = 0;
+    // if (maxy < 0)
+    //     maxy = 0;
+    // if (maxx > FRAME_OWIDTH2 - 10)
+    //     maxx = FRAME_OWIDTH2 - 10;
+    // if (maxy > FRAME_OHEIGHT2 - 10)
+    //     maxy = FRAME_OHEIGHT2 - 10;
 
-    font_write(fb_proc, FRAME_OWIDTH2 - 6, maxy, "<", FONT_COLOR_DFLT);
-    font_write(fb_proc, maxx, FRAME_OHEIGHT2 - 8, "|", FONT_COLOR_DFLT);
+    // font_write(fb_proc, FRAME_OWIDTH2 - 6, maxy, "<", FONT_COLOR_DFLT);
+    // font_write(fb_proc, maxx, FRAME_OHEIGHT2 - 8, "|", FONT_COLOR_DFLT);
 
-    // build RGB image
-    for (y = 0; y < FRAME_HEIGHT2; y++)
-    {
-        for (x = 0; x < FRAME_WIDTH2; x++)
-        {
-            // fb_proc is the gray scale frame buffer
-            v = fb_proc[y * FRAME_OWIDTH2 + x];
-            if (pal_inverse)
-                v = 255 - v;
+    // // build RGB image
+    // for (y = 0; y < FRAME_HEIGHT2; y++)
+    // {
+    //     for (x = 0; x < FRAME_WIDTH2; x++)
+    //     {
+    //         // fb_proc is the gray scale frame buffer
+    //         v = fb_proc[y * FRAME_OWIDTH2 + x];
+    //         if (pal_inverse)
+    //             v = 255 - v;
 
-            for (disp = 0; disp < 3; disp++)
-                // fb_proc2 is a 24bit RGB buffer
-                fb_proc2[3 * y * FRAME_OWIDTH2 + 3 * x + disp] =
-                    colormap[3 * v + disp];
-        }
-    }
+    //         for (disp = 0; disp < 3; disp++)
+    //             // fb_proc2 is a 24bit RGB buffer
+    //             fb_proc2[3 * y * FRAME_OWIDTH2 + 3 * x + disp] =
+    //                 colormap[3 * v + disp];
+    //     }
+    // }
 
 render:
     // jpg Visual Image
