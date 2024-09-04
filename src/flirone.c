@@ -628,7 +628,7 @@ static int EPloop(unsigned char *colormap)
 
         case 2:
             printf("\nAsk for video stream, start EP 0x85:\n");
-            printf("Max Zona A\t\tMax Zona B");
+            printf("Max Zona A\t\tMax Zona B\n");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_START,
                                         INDEX(2), data, LEN(2), timeout * 2);
             if (r < 0)
