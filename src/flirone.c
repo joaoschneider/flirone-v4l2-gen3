@@ -373,8 +373,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    printf("%.2f\t\t", raw2temperature(maxZonaA));
-    printf("%.2f\n", raw2temperature(maxZonaB));
+    printf("%.2f\t\t%.2f\n", raw2temperature(maxZonaA), raw2temperature(maxZonaB));
+    // printf("%.2f\n", raw2temperature(maxZonaB));
     // printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
     // printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
 
