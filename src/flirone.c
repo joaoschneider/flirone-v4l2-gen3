@@ -342,6 +342,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
             // armazena-se o valor no array pix
             // pix[y * FRAME_OWIDTH2 + x] = v;
+
             // se o ponto avaliado estiver na metade inicial da imagem capturada, armazena na zona A
             if (x >= 0 && x < 40)
             {
@@ -627,6 +628,7 @@ static int EPloop(unsigned char *colormap)
 
         case 2:
             printf("\nAsk for video stream, start EP 0x85:\n");
+            printf("Max Zona A\t\tMax Zona B");
             r = libusb_control_transfer(devh, REQ_TYPE, REQ, V_START,
                                         INDEX(2), data, LEN(2), timeout * 2);
             if (r < 0)
