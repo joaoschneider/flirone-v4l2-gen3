@@ -340,40 +340,46 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
             // left-shift no byte mais significativo (pos + 1) + OR com o byte menos significativo
             v = buf85[pos] | buf85[pos + 1] << 8;
 
+            if (v > maxZonaA)
+            {
+                maxZonaA = v;
+            }
+
             // armazena-se o valor no array pix
             // pix[y * FRAME_OWIDTH2 + x] = v;
 
             // se o ponto avaliado estiver na metade inicial da imagem capturada, armazena na zona A
-            if (x >= 0 && x < 40)
-            {
+            // if (x >= 0 && x < 40)
+            // {
 
-                if (v < minZonaA)
-                    minZonaA = v;
-                if (v > maxZonaB)
-                {
-                    maxZonaA = v;
-                }
-                zonaA[(y * (FRAME_OWIDTH2 / 2)) + x] = v;
-            }
-            // estando na metade final da image, armazena na zona B
-            else
-            {
-                // aqui pode ser confuso
-                // o primeiro fator da soma controla a linha que está sendo lida da imagem para armazenar no array unidimensional
-                // o segundo fator ajusta o valor de X para que ele esteja normalizado
-                //(desconsiderando o deslocamento de meia largura de imagem por ser a parte direita)
-                zonaB[(y * (FRAME_OWIDTH2 / 2)) + (x - FRAME_WIDTH2 / 2)] = v;
-                if (v < minZonaB)
-                    minZonaB = v;
-                if (v > maxZonaB)
-                {
-                    maxZonaB = v;
-                }
-            }
+            //     if (v < minZonaA)
+            //         minZonaA = v;
+            //     if (v > maxZonaB)
+            //     {
+            //         maxZonaA = v;
+            //     }
+            //     zonaA[(y * (FRAME_OWIDTH2 / 2)) + x] = v;
+            // }
+            // // estando na metade final da image, armazena na zona B
+            // else
+            // {
+            //     // aqui pode ser confuso
+            //     // o primeiro fator da soma controla a linha que está sendo lida da imagem para armazenar no array unidimensional
+            //     // o segundo fator ajusta o valor de X para que ele esteja normalizado
+            //     //(desconsiderando o deslocamento de meia largura de imagem por ser a parte direita)
+            //     zonaB[(y * (FRAME_OWIDTH2 / 2)) + (x - FRAME_WIDTH2 / 2)] = v;
+            //     if (v < minZonaB)
+            //         minZonaB = v;
+            //     if (v > maxZonaB)
+            //     {
+            //         maxZonaB = v;
+            //     }
+            // }
         }
     }
 
-    printf("%.2f\t\t%.2f\n", raw2temperature(maxZonaA), raw2temperature(maxZonaB));
+    // printf("%.2f\t\t%.2f\n", raw2temperature(maxZonaA), raw2temperature(maxZonaB));
+    printf("%.2f\n", raw2temperature(maxZonaA));
     // printf("%.2f\n", raw2temperature(maxZonaB));
     // printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
     // printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
