@@ -307,9 +307,22 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         {
             if (flirone_pro)
             {
-                pos = 2 * (y * (FRAME_OWIDTH2 + 4) + x) + 32;
-                if (x > hw)
-                    pos += 4;
+                for (y = 0; y < 120; ++y)
+                {
+                    for (x = 0; x < 160; ++x)
+                    {
+                        if (x < 80)
+                            v = buf85[2 * (y * 164 + x) + 32] + 256 * buf85[2 * (y * 164 + x) + 33];
+                        else
+                            v = buf85[2 * (y * 164 + x) + 32 + 4] + 256 * buf85[2 * (y * 164 + x) + 33 + 4];
+                        // pix[y * 160 + x] = v; // unsigned char!!
+
+                        if (v > maxZonaA)
+                        {
+                            maxZonaA = v;
+                        }
+                    }
+                }
             }
             else
             {
@@ -333,16 +346,6 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                 // pos = 2 * (10) + 32
                 // pos = 52
                 pos = 2 * (y * (FRAME_OWIDTH2 + 2) + x) + 32;
-            }
-
-            // os dados são enviados em formato little endian
-            // para que possamos pegar as informações termicas de 16 bit:
-            // left-shift no byte mais significativo (pos + 1) + OR com o byte menos significativo
-            v = buf85[pos] | buf85[pos + 1] << 8;
-
-            if (v > maxZonaA)
-            {
-                maxZonaA = v;
             }
 
             // armazena-se o valor no array pix
