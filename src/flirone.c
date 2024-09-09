@@ -312,15 +312,22 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                     for (x = 0; x < 160; ++x)
                     {
                         if (x < 80)
-                            v = buf85[2 * (y * 164 + x) + 32] + 256 * buf85[2 * (y * 164 + x) + 33];
-                        else
-                            v = buf85[2 * (y * 164 + x) + 32 + 4] + 256 * buf85[2 * (y * 164 + x) + 33 + 4];
-                        // pix[y * 160 + x] = v; // unsigned char!!
-
-                        if (v > maxZonaA)
                         {
-                            maxZonaA = v;
+                            v = buf85[2 * (y * 164 + x) + 32] + 256 * buf85[2 * (y * 164 + x) + 33];
+                            if (v > maxZonaA)
+                            {
+                                maxZonaA = v;
+                            }
                         }
+                        else
+                        {
+                            v = buf85[2 * (y * 164 + x) + 32 + 4] + 256 * buf85[2 * (y * 164 + x) + 33 + 4];
+                            if (v > maxZonaB)
+                            {
+                                maxZonaB = v;
+                            }
+                        }
+                        // pix[y * 160 + x] = v; // unsigned char!!
                     }
                 }
             }
@@ -381,8 +388,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         }
     }
 
-    // printf("%.2f\t\t%.2f\n", raw2temperature(maxZonaA), raw2temperature(maxZonaB));
-    printf("%.2f\n", raw2temperature(maxZonaA));
+    printf("%.2f\t\t%.2f\n", raw2temperature(maxZonaA), raw2temperature(maxZonaB));
+    // printf("%.2f\n", raw2temperature(maxZonaA));
     // printf("%.2f\n", raw2temperature(maxZonaB));
     // printf("Menor valor de temperatura zona A: %.2f\t", raw2temperature(minZonaA));
     // printf("Menor valor de temperatura zona B: %.2f\n", raw2temperature(minZonaB));
