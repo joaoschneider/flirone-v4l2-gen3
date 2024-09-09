@@ -272,8 +272,8 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
         // se não for, devemos aguardar o próximo pacote de dados e agregá-lo a este buf85pointer.
         return;
 
-    printf("actual_len=%d, buf85pointer=%d, FrameSize=%d, ThermalSize=%d, JpgSize=%d\n",
-           actual_length, buf85pointer, FrameSize, ThermalSize, JpgSize);
+    // printf("actual_len=%d, buf85pointer=%d, FrameSize=%d, ThermalSize=%d, JpgSize=%d\n",
+    //        actual_length, buf85pointer, FrameSize, ThermalSize, JpgSize);
 
     // get a full frame, first print the status
     buf85pointer = 0;
