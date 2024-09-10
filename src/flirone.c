@@ -399,22 +399,22 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
 
     /* printf("min=%d max=%d x=%d y=%d\n", min, max, maxx, maxy); */
 
-    // // scale the data in the array
-    // delta = max - min;
-    // if (delta == 0)
-    //     delta = 1; // if max = min we have divide by zero
-    // scale = 0x10000 / delta;
+    // scale the data in the array
+    delta = max - min;
+    if (delta == 0)
+        delta = 1; // if max = min we have divide by zero
+    scale = 0x10000 / delta;
 
-    // for (y = 0; y < FRAME_OHEIGHT2; y++)
-    // {
-    //     for (x = 0; x < FRAME_OWIDTH2; x++)
-    //     {
-    //         int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
+    for (y = 0; y < FRAME_OHEIGHT2; y++)
+    {
+        for (x = 0; x < FRAME_OWIDTH2; x++)
+        {
+            int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
 
-    //         // fb_proc is the gray scale frame buffer
-    //         fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
-    //     }
-    // }
+            // fb_proc is the gray scale frame buffer
+            fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
+        }
+    }
 
     // // calc medium of 2x2 center pixels
     // med = pix[(hh - 1) * FRAME_OWIDTH2 + hw - 1] +
@@ -446,7 +446,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     //     font_write(fb_proc, 1, FRAME_OHEIGHT2 + 12, st2, FONT_COLOR_DFLT);
     // }
 
-    // // show crosshairs, remove if required
+    // show crosshairs, remove if required
     // font_write(fb_proc, hw - 2, hh - 3, "+", FONT_COLOR_DFLT);
 
     // maxx -= 4;
@@ -464,22 +464,22 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     // font_write(fb_proc, FRAME_OWIDTH2 - 6, maxy, "<", FONT_COLOR_DFLT);
     // font_write(fb_proc, maxx, FRAME_OHEIGHT2 - 8, "|", FONT_COLOR_DFLT);
 
-    // // build RGB image
-    // for (y = 0; y < FRAME_HEIGHT2; y++)
-    // {
-    //     for (x = 0; x < FRAME_WIDTH2; x++)
-    //     {
-    //         // fb_proc is the gray scale frame buffer
-    //         v = fb_proc[y * FRAME_OWIDTH2 + x];
-    //         if (pal_inverse)
-    //             v = 255 - v;
+    // build RGB image
+    for (y = 0; y < FRAME_HEIGHT2; y++)
+    {
+        for (x = 0; x < FRAME_WIDTH2; x++)
+        {
+            // fb_proc is the gray scale frame buffer
+            v = fb_proc[y * FRAME_OWIDTH2 + x];
+            if (pal_inverse)
+                v = 255 - v;
 
-    //         for (disp = 0; disp < 3; disp++)
-    //             // fb_proc2 is a 24bit RGB buffer
-    //             fb_proc2[3 * y * FRAME_OWIDTH2 + 3 * x + disp] =
-    //                 colormap[3 * v + disp];
-    //     }
-    // }
+            for (disp = 0; disp < 3; disp++)
+                // fb_proc2 is a 24bit RGB buffer
+                fb_proc2[3 * y * FRAME_OWIDTH2 + 3 * x + disp] =
+                    colormap[3 * v + disp];
+        }
+    }
 
 render:
     // jpg Visual Image
