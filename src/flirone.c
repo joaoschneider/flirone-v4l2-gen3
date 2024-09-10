@@ -219,7 +219,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     char magicbyte[4] = {0xEF, 0xBE, 0x00, 0x00};
     uint32_t FrameSize, ThermalSize, JpgSize;
     int v, x, y, pos, disp;
-    // unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2]; // original Flir 16 Bit RAW 80 x 60
+    unsigned short pix[FRAME_OWIDTH2 * FRAME_OHEIGHT2];         // original Flir 16 Bit RAW 160 x 120
     unsigned short zonaA[(FRAME_OWIDTH2 * FRAME_OHEIGHT2) / 2]; // zona A para controle (à esquerda da imagem)
     unsigned short zonaB[(FRAME_OWIDTH2 * FRAME_OHEIGHT2) / 2]; // zona B para controle (à direita da imagem)
     unsigned char *fb_proc, *fb_proc2;
@@ -318,6 +318,12 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                             {
                                 maxZonaA = v;
                             }
+                            else if (v < minZonaA)
+                            {
+                                minZonaA = v;
+                            }
+
+                            pix[y * FRAME_OWIDTH2 + x] = v;
                         }
                         else
                         {
@@ -326,6 +332,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
                             {
                                 maxZonaB = v;
                             }
+                            pix[y * FRAME_OWIDTH2 + x] = v;
                         }
                         // pix[y * 160 + x] = v; // unsigned char!!
                     }
@@ -400,7 +407,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     /* printf("min=%d max=%d x=%d y=%d\n", min, max, maxx, maxy); */
 
     // scale the data in the array
-    delta = max - min;
+    delta = maxZonaA - minZonaA;
     if (delta == 0)
         delta = 1; // if max = min we have divide by zero
     scale = 0x10000 / delta;
@@ -409,7 +416,7 @@ static void vframe(char ep[], char EP_error[], int r, int actual_length,
     {
         for (x = 0; x < FRAME_OWIDTH2; x++)
         {
-            int v = (pix[y * FRAME_OWIDTH2 + x] - min) * scale >> 8;
+            int v = (pix[y * FRAME_OWIDTH2 + x] - minZonaA) * scale >> 8;
 
             // fb_proc is the gray scale frame buffer
             fb_proc[y * FRAME_OWIDTH2 + x] = v; // unsigned char!!
